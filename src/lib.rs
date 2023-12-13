@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
+use proc_macro2::Span;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput};
+use syn::{parse_macro_input, DeriveInput, Ident};
 
 // attribute-type proc macro that can be added to a tests mod to declare a 
 // derive-type proc macro that derives the tested version of a trait using those tests
@@ -12,9 +13,8 @@ pub fn derive_tested_trait(args: TokenStream, trait_input: TokenStream) -> Token
     trait_input
 }
 
-//#[derive_tested_trait(Container)]
-//mod container_tests {
-//    use super::UntestedContainer;
+//#[derive_tested_trait]
+// trait Container <T>: UntestedContainer<T>{
 //
 //    #[test]
 //    fn test_returns_correct_num_items() {
@@ -33,13 +33,15 @@ pub fn derive(derive_input: TokenStream) -> TokenStream {
 
     let type_name = derive_input.ident.clone();
 
+    let mod_name = Ident::new(&format!("{}_test", "Container"), Span::call_site());
+
     let (impl_generics, ty_generics, where_clause) = derive_input.generics.split_for_impl();
 
     let expanded = quote! {
         impl #impl_generics Container #impl_generics for #type_name #ty_generics #where_clause{}
 
         #[cfg(test)]
-        mod container_tests {
+        mod #mod_name {
             use super::UntestedContainer;
             use super::#type_name; // TODO the outer macro needs to insert this into the ItemMod's content vec
             
