@@ -15,6 +15,7 @@ pub fn derive_tested_trait(args: TokenStream, trait_input: TokenStream) -> Token
 
 //#[derive_tested_trait]
 // trait Container <T>: UntestedContainer<T>{
+//    fn do_not_manually_implement();
 //
 //    #[test]
 //    fn test_returns_correct_num_items() {
