@@ -37,7 +37,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
             #[test]
             fn test_returns_correct_num_items() {
                 // #[arbitrary(default)] TODO
-                let c: #type_name<usize> = #type_name::new(Box::new([0,1,2]));
+                let c: #type_name<usize> = #type_name::new(Box::new([0,1,2,3]));
 
                 assert_eq!(c.len(), c.into_iter().count());
             }
