@@ -38,11 +38,13 @@ pub fn derive(derive_input: TokenStream) -> TokenStream {
     let (impl_generics, ty_generics, where_clause) = derive_input.generics.split_for_impl();
 
     let expanded = quote! {
-        impl #impl_generics Container #impl_generics for #type_name #ty_generics #where_clause{}
+        impl #impl_generics Container #impl_generics for #type_name #ty_generics #where_clause{
+            fn do_not_manually_implement(){}
+        }
 
         #[cfg(test)]
         mod #mod_name {
-            use super::UntestedContainer;
+            use super::UntestedContainer; // TODO where does this come from? This is a trait bound on the trait being tested
             use super::#type_name; // TODO the outer macro needs to insert this into the ItemMod's content vec
             
             #[test]
