@@ -5,11 +5,11 @@ use syn::{parse_macro_input, DeriveInput};
 // attribute-type proc macro that can be added to a tests mod to declare a 
 // derive-type proc macro that derives the tested version of a trait using those tests
 #[proc_macro_attribute]
-pub fn derive_tested_trait(args: TokenStream, input: TokenStream) -> TokenStream {
+pub fn derive_tested_trait(args: TokenStream, trait_input: TokenStream) -> TokenStream {
     println!("args: {args}");
-    println!("input: {input}");
+    println!("trait_input: {trait_input}");
 
-    input
+    trait_input
 }
 
 //#[derive_tested_trait(Container)]
@@ -28,12 +28,12 @@ pub fn derive_tested_trait(args: TokenStream, input: TokenStream) -> TokenStream
 
 // This is what should be produced from the above
 #[proc_macro_derive(Container)]
-pub fn derive(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
+pub fn derive(derive_input: TokenStream) -> TokenStream {
+    let derive_input = parse_macro_input!(derive_input as DeriveInput);
 
-    let type_name = input.ident.clone();
+    let type_name = derive_input.ident.clone();
 
-    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+    let (impl_generics, ty_generics, where_clause) = derive_input.generics.split_for_impl();
 
     let expanded = quote! {
         impl #impl_generics Container #impl_generics for #type_name #ty_generics #where_clause{}
