@@ -5,7 +5,9 @@ trait UntestedContainer <T>: IntoIterator{
     fn len (&self) -> usize;
 }
 
-trait Container <T>: UntestedContainer<T>{}
+trait Container <T>: UntestedContainer<T>{
+    fn do_not_manually_implement();
+}
 
 impl <T> UntestedContainer<T> for Pile<T>{
     fn new (items: Box<[T]>) -> Self {

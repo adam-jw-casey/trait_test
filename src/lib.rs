@@ -44,7 +44,7 @@ pub fn derive(derive_input: TokenStream) -> TokenStream {
 
         #[cfg(test)]
         mod #mod_name {
-            use super::UntestedContainer; // TODO where does this come from? This is a trait bound on the trait being tested
+            use super::UntestedContainer; // TODO This is a trait bound on the trait being tested from the outer macro
             use super::#type_name; // TODO the outer macro needs to insert this into the ItemMod's content vec
             
             #[test]
