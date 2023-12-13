@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, ItemTrait};
+use syn::{parse_macro_input, ItemTrait, TraitItem};
 
 // attribute-type proc macro that can be added to a tests mod to declare a 
 // derive-type proc macro that derives the tested version of a trait using those tests
@@ -8,6 +8,7 @@ use syn::{parse_macro_input, ItemTrait};
 pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> TokenStream {
 
     let trait_input = parse_macro_input!(trait_input as ItemTrait);
+    let mut trait_output = trait_input.clone();
     let trait_name = trait_input.ident;
 
     // These variables are for the inner macro
@@ -17,7 +18,12 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
     let ty_generics = "ty_generics";
     let mod_name = "mod_name";
 
-
+    trait_output.items = trait_output.items.into_iter().filter(|item| 
+        match item {
+            TraitItem::Fn(item) => todo!,
+            _ => true,
+        }
+    ).collect();
 
     let expanded = quote! {
         extern crate proc_macro;
