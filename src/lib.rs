@@ -1,7 +1,6 @@
 use proc_macro::TokenStream;
-use proc_macro2::Span;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Ident};
+use syn::{parse_macro_input, DeriveInput};
 
 // attribute-type proc macro that can be added to a tests mod to declare a 
 // derive-type proc macro that derives the tested version of a trait using those tests
@@ -33,7 +32,6 @@ pub fn derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
     let type_name = input.ident.clone();
-    let test_mod_name = Ident::new(&format!("{}_test", type_name), Span::call_site());
 
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
 
@@ -41,13 +39,13 @@ pub fn derive(input: TokenStream) -> TokenStream {
         impl #impl_generics Container #impl_generics for #type_name #ty_generics #where_clause{}
 
         #[cfg(test)]
-        mod #test_mod_name {
+        mod container_tests {
             use super::UntestedContainer;
-            use super::#type_name;
+            use super::#type_name; // TODO the outer macro needs to insert this into the ItemMod's content vec
             
             #[test]
             fn test_returns_correct_num_items() {
-                let c: #type_name<usize> = #type_name::new(Box::new([0,1,2,3]));
+                let c: #type_name<usize> = #type_name::new(Box::new([0,1,2,3])); // TODO how to resolve the type here? Maybe every instance of the trait name (e.g. Container) is replaced with the concrete type?
 
                 assert_eq!(c.len(), c.into_iter().count());
             }
