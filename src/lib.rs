@@ -6,8 +6,8 @@ use syn::{parse_macro_input, DeriveInput};
 // derive-type proc macro that derives the tested version of a trait using those tests
 #[proc_macro_attribute]
 pub fn derive_tested_trait(args: TokenStream, input: TokenStream) -> TokenStream {
-    println!("args: {}", args);
-    println!("input: {}", input);
+    println!("args: {args}");
+    println!("input: {input}");
 
     input
 }
@@ -45,7 +45,8 @@ pub fn derive(input: TokenStream) -> TokenStream {
             
             #[test]
             fn test_returns_correct_num_items() {
-                let c: #type_name<usize> = #type_name::new(Box::new([0,1,2,3])); // TODO how to resolve the type here? Maybe every instance of the trait name (e.g. Container) is replaced with the concrete type?
+                // TODO how to resolve the type here? Maybe every instance of the trait name (e.g. Container) is replaced with the concrete type?
+                let c: #type_name<usize> = #type_name::new(Box::new([0,1,2,3]));
 
                 assert_eq!(c.len(), c.into_iter().count());
             }
