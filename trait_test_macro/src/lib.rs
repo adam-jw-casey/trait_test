@@ -38,8 +38,12 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
         .collect();
 
     let mut trait_declaration = trait_input.clone();
-    trait_declaration.items.retain(|item| !is_test_function(item) && !is_verbatim_item(item)); // When the trait is written out, don't include the #[test] functions, since these aren't valid Rust syntax
-    let dummy_fn: proc_macro::TokenStream = quote!(fn do_not_manually_implement(){}).into();
+    // When the trait is written out, don't include the #[test] functions, since these aren't valid Rust syntax
+    trait_declaration.items.retain(|item| !is_test_function(item) && !is_verbatim_item(item));
+    
+    // This is a function warning implementors to not manually implement this trait. Ideally this
+    // would be enforced by the compiler.
+    let dummy_fn: proc_macro::TokenStream = quote!(fn do_not_manually_implement(panic!("Do not manually implement this trait")){}).into();
     trait_declaration.items.push(parse_macro_input!(dummy_fn));
 
     //// Stuff for the unit tests
