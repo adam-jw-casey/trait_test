@@ -13,20 +13,21 @@ fn is_test_attribute(attr: &Attribute) -> bool {
 
 fn is_test_function(item: &TraitItem) -> bool {
     match item {
-        TraitItem::Fn(item) => item.attrs.iter().filter(|a| is_test_attribute(a)).count() != 0,
+        TraitItem::Fn(item) => item.attrs.iter().any(is_test_attribute),
         _ => true,
     }
 }
 
 // attribute-type proc macro that can be added to a tests mod to declare a 
 // derive-type proc macro that derives the tested version of a trait using those tests
+#[allow(clippy::missing_panics_doc)]
 #[proc_macro_attribute]
 pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> TokenStream {
 
     let trait_input = parse_macro_input!(trait_input as ItemTrait);
 
-    let mut trait_output = trait_input.clone();
-    trait_output.items.retain(|item| !is_test_function(item)); // When the trait is written out, don't include the #[test] functions, since these aren't valid Rust syntax
+    let mut trait_declaration = trait_input.clone();
+    trait_declaration.items.retain(|item| !is_test_function(item)); // When the trait is written out, don't include the #[test] functions, since these aren't valid Rust syntax
     
     let test_funcs: Vec<TraitItemFn> = trait_input.items.into_iter().filter(is_test_function).map(|item| match item {TraitItem::Fn(item) => item, _=> panic!("unreachable")}).collect();// TODO unused
 
@@ -39,12 +40,11 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
     let ty_generics = "ty_generics";
     let mod_name = "mod_name";
 
-
-    let expanded = quote! {
+    let derive_macro = quote! {
         extern crate proc_macro;
         use proc_macro::TokenStream;
-        use quote::quote;
-        use syn::{parse_macro_input, DeriveInput, format_ident,};
+        use quote::{quote, format_ident,};
+        use syn::{parse_macro_input, DeriveInput};
 
         // This is the inner, derive macro
         #[proc_macro_derive(#trait_name)]
@@ -53,12 +53,12 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
 
             let type_name = derive_input.ident.clone();
 
-            let mod_name = format_ident!("{}_test", #trait_name);
+            let mod_name = format_ident!("{}_test", "#trait_name");
 
             let (impl_generics, ty_generics, where_clause) = derive_input.generics.split_for_impl();
 
             let expanded = quote! {
-                impl ##impl_generics ##trait_name ##impl_generics for ##type_name ##ty_generics ##where_clause{
+                impl ##impl_generics #trait_name ##impl_generics for ##type_name ##ty_generics ##where_clause{
                     fn do_not_manually_implement(){}
                 }
 
@@ -81,5 +81,8 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
         }
     };
 
-    expanded.into()
+    quote!{
+        #trait_declaration
+        #derive_macro
+    }.into()
 }
