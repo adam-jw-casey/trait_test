@@ -18,6 +18,10 @@ fn is_test_function(item: &TraitItem) -> bool {
     }
 }
 
+fn is_verbatim_item(item: &TraitItem) -> bool {
+    matches!(item, TraitItem::Verbatim(_))
+}
+
 // attribute-type proc macro that can be added to a tests mod to declare a 
 // derive-type proc macro that derives the tested version of a trait using those tests
 #[allow(clippy::missing_panics_doc)]
@@ -26,19 +30,29 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
 
     let trait_input = parse_macro_input!(trait_input as ItemTrait);
 
-    let mut trait_declaration = trait_input.clone();
-    trait_declaration.items.retain(|item| !is_test_function(item)); // When the trait is written out, don't include the #[test] functions, since these aren't valid Rust syntax
-    
-    let test_funcs: Vec<TraitItemFn> = trait_input.items.into_iter().filter(is_test_function).map(|item| match item {TraitItem::Fn(item) => item, _=> panic!("unreachable")}).collect();// TODO unused
+    //// Stuff for the trait declaration
+    let verbatim_items: Vec<TraitItem> = trait_input.items.clone().into_iter().filter(is_verbatim_item).collect();
 
+    let mut trait_declaration = trait_input.clone();
+    trait_declaration.items.retain(|item| !is_test_function(item) && !is_verbatim_item(item)); // When the trait is written out, don't include the #[test] functions, since these aren't valid Rust syntax
+    let dummy_fn: proc_macro::TokenStream = quote!(fn do_not_manually_implement(){}).into();
+    trait_declaration.items.push(parse_macro_input!(dummy_fn));
+
+    //// Stuff for the unit tests
     let trait_name = trait_input.ident;
+    let test_mod = format_ident!("{}_tests", trait_name);
+
+    //let super_traits = trait_input.supertraits.iter().filter(||).collect();
+
+    let test_funcs: Vec<TraitItemFn> = trait_input.items.into_iter().filter(is_test_function).map(|item| match item {TraitItem::Fn(item) => item, _=> panic!("unreachable")}).collect();// TODO unused
 
     // These variables are for the inner macro
     let impl_generics = "impl_generics";
     let where_clause = "where_clause";
     let type_name = "type_name";
     let ty_generics = "ty_generics";
-    let mod_name = "mod_name";
+    let unit_tests = "unit_tests";
+    let derived_implementation = "derived_implementation";
 
     let derive_macro = quote! {
         extern crate proc_macro;
@@ -57,27 +71,30 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
 
             let (impl_generics, ty_generics, where_clause) = derive_input.generics.split_for_impl();
 
-            let expanded = quote! {
-                impl ##impl_generics #trait_name ##impl_generics for ##type_name ##ty_generics ##where_clause{
-                    fn do_not_manually_implement(){}
-                }
-
+            let unit_tests = quote! {
                 #[cfg(test)]
-                mod #mod_name {
-                    use super::UntestedContainer; // TODO This is a trait bound on the trait being tested from the outer macro
-                    use super::#type_name; // TODO the outer macro needs to insert this into the ItemMod's content vec
-                    
-                    #[test]
-                    fn test_returns_correct_num_items() {
-                        // TODO how to resolve the type here? Maybe every instance of the trait name (e.g. #trait_name) is replaced with the concrete type?
-                        let c: #type_name<usize> = #type_name::new(Box::new([0,1,2,3]));
+                mod #test_mod {
+                    //#(use super::#super_traits;) *
 
-                        assert_eq!(c.len(), c.into_iter().count());
-                    }
+                    #(#verbatim_items) *
+
+                    //use super::##type_name;
+
+                    #(#test_funcs) *
                 }
             };
 
-            TokenStream::from(expanded)
+            let derived_implementation = quote! {
+                impl ##impl_generics #trait_name ##impl_generics for ##type_name ##ty_generics ##where_clause{
+                    fn do_not_manually_implement(){}
+                }
+    
+            };
+
+            quote!{
+                ##unit_tests
+                ##derived_implementation
+            }.into()
         }
     };
 

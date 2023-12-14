@@ -7,22 +7,21 @@ trait UntestedContainer <T>: IntoIterator{
 }
 #[derive_tested_trait]
 trait Container <T>: UntestedContainer<T>{
-      fn do_not_manually_implement();
+    use super::UntestedContainer;
+    #[test]
+    fn test_returns_correct_num_items() {
+        let c: Container<usize> = Container::new(Box::new([0,1,2,3]));
 
-//    #[test]
-//    fn test_returns_correct_num_items() {
-//        let c: Container<usize> = Container::new(Box::new([0,1,2,3]));
-//
-//        assert_eq!(c.len(), c.into_iter().count());
-//    }
-//
-//    #[test]
-//    fn test_deterministic_constructor() {
-//        let c1: Container<usize> = Container::new(Box::new([0,1,2,3]));
-//        let c2: Container<usize> = Container::new(Box::new([0,1,2,3]));
-//
-//        assert_eq!(c1.len(), c.len());
-//    }
+        assert_eq!(c.len(), c.into_iter().count());
+    }
+
+    #[test]
+    fn test_deterministic_constructor() {
+        let c1: Container<usize> = Container::new(Box::new([0,1,2,3]));
+        let c2: Container<usize> = Container::new(Box::new([0,1,2,3]));
+
+        assert_eq!(c1.len(), c2.len());
+    }
 }
 
 //// This is what should be produced from the above
