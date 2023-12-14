@@ -31,6 +31,7 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
     let trait_input = parse_macro_input!(trait_input as ItemTrait);
 
     //// Stuff for the trait declaration
+    // These are items that are not a const, fn, type or macro. Generally this is imports with `use`
     let verbatim_items: Vec<TraitItem> = trait_input
         .items.clone()
         .into_iter()
@@ -68,7 +69,10 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
     let derived_implementation = "derived_implementation";
 
     let derive_macro = quote! {
+        // TODO currently requires that all of these are imported in the library writer's scope
+        // (where the trait is being implemented)
         extern crate proc_macro;
+
         use proc_macro::TokenStream;
         use quote::{quote, format_ident,};
         use syn::{parse_macro_input, DeriveInput};
