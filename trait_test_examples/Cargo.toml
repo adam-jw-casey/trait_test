@@ -6,3 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+trait_test_macro = {path="../trait_test_macro"}
+
+[lints.clippy]
+pedantic = "warn"
+cargo = "warn"

@@ -43,7 +43,7 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
     
     // This is a function warning implementors to not manually implement this trait. Ideally this
     // would be enforced by the compiler.
-    let dummy_fn: proc_macro::TokenStream = quote!(fn do_not_manually_implement(panic!("Do not manually implement this trait")){}).into();
+    let dummy_fn: proc_macro::TokenStream = quote!(fn do_not_manually_implement(){panic!("Do not manually implement this trait")}).into();
     trait_declaration.items.push(parse_macro_input!(dummy_fn));
 
     //// Stuff for the unit tests
