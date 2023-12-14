@@ -1,6 +1,22 @@
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{parse_macro_input, ItemTrait, TraitItem};
+use quote::{quote, format_ident};
+use syn::{parse_macro_input, ItemTrait, TraitItem, TraitItemFn, Attribute, Meta};
+
+fn is_test_attribute(attr: &Attribute) -> bool {
+    match &attr.meta{
+        Meta::Path(path) => {
+            path.segments.len() == 1 && path.segments.first().expect("We already checked that len is 1").ident == format_ident!("test")
+        },
+        _ => false,
+    }
+}
+
+fn is_test_function(item: &TraitItem) -> bool {
+    match item {
+        TraitItem::Fn(item) => item.attrs.iter().filter(|a| is_test_attribute(a)).count() != 0,
+        _ => true,
+    }
+}
 
 // attribute-type proc macro that can be added to a tests mod to declare a 
 // derive-type proc macro that derives the tested version of a trait using those tests
@@ -8,7 +24,12 @@ use syn::{parse_macro_input, ItemTrait, TraitItem};
 pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> TokenStream {
 
     let trait_input = parse_macro_input!(trait_input as ItemTrait);
+
     let mut trait_output = trait_input.clone();
+    trait_output.items.retain(|item| !is_test_function(item)); // When the trait is written out, don't include the #[test] functions, since these aren't valid Rust syntax
+    
+    let test_funcs: Vec<TraitItemFn> = trait_input.items.into_iter().filter(is_test_function).map(|item| match item {TraitItem::Fn(item) => item, _=> panic!("unreachable")}).collect();// TODO unused
+
     let trait_name = trait_input.ident;
 
     // These variables are for the inner macro
@@ -18,12 +39,6 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
     let ty_generics = "ty_generics";
     let mod_name = "mod_name";
 
-    trait_output.items = trait_output.items.into_iter().filter(|item| 
-        match item {
-            TraitItem::Fn(item) => todo!,
-            _ => true,
-        }
-    ).collect();
 
     let expanded = quote! {
         extern crate proc_macro;
