@@ -31,7 +31,11 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
     let trait_input = parse_macro_input!(trait_input as ItemTrait);
 
     //// Stuff for the trait declaration
-    let verbatim_items: Vec<TraitItem> = trait_input.items.clone().into_iter().filter(is_verbatim_item).collect();
+    let verbatim_items: Vec<TraitItem> = trait_input
+        .items.clone()
+        .into_iter()
+        .filter(is_verbatim_item)
+        .collect();
 
     let mut trait_declaration = trait_input.clone();
     trait_declaration.items.retain(|item| !is_test_function(item) && !is_verbatim_item(item)); // When the trait is written out, don't include the #[test] functions, since these aren't valid Rust syntax
@@ -44,7 +48,12 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
 
     //let super_traits = trait_input.supertraits.iter().filter(||).collect();
 
-    let test_funcs: Vec<TraitItemFn> = trait_input.items.into_iter().filter(is_test_function).map(|item| match item {TraitItem::Fn(item) => item, _=> panic!("unreachable")}).collect();// TODO unused
+    let test_funcs: Vec<TraitItemFn> = trait_input
+        .items
+        .into_iter()
+        .filter(is_test_function)
+        .map(|item| match item {TraitItem::Fn(item) => item, _=> panic!("unreachable")})
+        .collect();
 
     // These variables are for the inner macro
     let impl_generics = "impl_generics";
