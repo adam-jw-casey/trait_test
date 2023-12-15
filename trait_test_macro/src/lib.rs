@@ -84,8 +84,6 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
 
             let type_name = derive_input.ident.clone();
 
-            let mod_name = format_ident!("{}_test", "#trait_name");
-
             let (impl_generics, ty_generics, where_clause) = derive_input.generics.split_for_impl();
 
             let unit_tests = quote! {
@@ -109,7 +107,7 @@ pub fn derive_tested_trait(_args: TokenStream, trait_input: TokenStream) -> Toke
             };
 
             quote!{
-                ##unit_tests
+                #unit_tests
                 ##derived_implementation
             }.into()
         }
