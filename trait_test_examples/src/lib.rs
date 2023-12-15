@@ -1,10 +1,11 @@
 //// Defining trait
 use trait_test_macro::derive_tested_trait;
 
-trait UntestedContainer <T>: IntoIterator{
+pub trait UntestedContainer <T>: IntoIterator{
     fn new (items: Box<[T]>) -> Self;
     fn len (&self) -> usize;
 }
+
 #[derive_tested_trait]
 trait Container <T>: UntestedContainer<T>{
     //use super::UntestedContainer;
